@@ -1,0 +1,113 @@
+name: Build LuCI App APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        description: '包名 (必须以 luci-app- 开头)'
+        required: true
+        default: 'luci-app-myapp'
+      service_title:
+        description: '显示标题'
+        required: true
+        default: 'My App'
+      version:
+        description: '版本 (apk 语法, 如 1.0-r0 / 0.0.0_git1234-r0)'
+        required: true
+        default: '1.0-r0'
+      description:
+        description: '包描述'
+        required: true
+        default: 'A LuCI application packaged as apk'
+      binary:
+        description: '二进制安装路径 (仅记录用, 二进制需另行提供)'
+        required: false
+        default: ''
+      start_args:
+        description: '启动参数 (空格分隔)'
+        required: false
+        default: ''
+      has_web:
+        description: '是否生成 Web 页面'
+        type: boolean
+        default: true
+      web_entry:
+        description: 'Web 入口 (端口或 端口/路径)'
+        required: false
+        default: '3001'
+      extra_options:
+        description: '额外选项 "变量:默认值:标签" 空格分隔'
+        required: false
+        default: ''
+      work_dir:
+        description: '工作目录 (procd chdir)'
+        required: false
+        default: ''
+      env_vars:
+        description: '是否支持环境变量列表'
+        type: boolean
+        default: false
+      run_user:
+        description: '运行用户 (留空则 procd 不设 user)'
+        required: false
+        default: ''
+      run_group:
+        description: '运行用户组'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      # Alpine 自带完整 apk-tools (含 mkpkg)，且是 musl，与 OpenWrt 一致
+      image: alpine:3.23
+    steps:
+      - name: Install dependencies
+        run: apk add --no-cache bash python3 coreutils
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: apk
+
+      - name: Verify apk mkpkg available
+        run: |
+          apk --version
+          apk mkpkg 2>&1 | head -1 || true
+          echo "apk arch: $(apk --print-arch)"
+
+      - name: Build apk package
+        env:
+          INPUT_PACKAGE_NAME: ${{ inputs.package_name }}
+          INPUT_SERVICE_TITLE: ${{ inputs.service_title }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_DESCRIPTION: ${{ inputs.description }}
+          INPUT_BINARY: ${{ inputs.binary }}
+          INPUT_START_ARGS: ${{ inputs.start_args }}
+          INPUT_HAS_WEB: ${{ inputs.has_web }}
+          INPUT_WEB_ENTRY: ${{ inputs.web_entry }}
+          INPUT_EXTRA_OPTIONS: ${{ inputs.extra_options }}
+          INPUT_WORK_DIR: ${{ inputs.work_dir }}
+          INPUT_ENV_VARS: ${{ inputs.env_vars }}
+          INPUT_RUN_USER: ${{ inputs.run_user }}
+          INPUT_RUN_GROUP: ${{ inputs.run_group }}
+          APK_BIN: apk
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: bash scripts/build.sh
+
+      - name: Verify package structure
+        run: |
+          APK_FILE=$(find . -maxdepth 1 -name '*.apk' | head -1)
+          echo "Built: $APK_FILE"
+          echo "=== adbdump info ==="
+          apk adbdump "$APK_FILE" 2>&1 | head -40 || true
+          echo "=== file size ==="
+          ls -lh "$APK_FILE"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.package_name }}-${{ inputs.version }}
+          path: './*.apk'
+          if-no-files-found: error
