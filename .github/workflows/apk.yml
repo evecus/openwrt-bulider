@@ -64,7 +64,7 @@ jobs:
       image: alpine:3.23
     steps:
       - name: Install dependencies
-        run: apk add --no-cache bash python3 coreutils
+        run: apk add --no-cache bash python3 coreutils git
 
       - name: Checkout
         uses: actions/checkout@v4
