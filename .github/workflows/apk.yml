@@ -6,11 +6,11 @@ on:
       package_name:
         description: '包名 (必须以 luci-app- 开头)'
         required: true
-        default: 'luci-app-myapp'
+        default: 'luci-app-'
       service_title:
         description: '显示标题'
         required: true
-        default: 'My App'
+        default: ''
       version:
         description: '版本 (apk 语法, 如 1.0-r0 / 0.0.0_git1234-r0)'
         required: true
@@ -18,11 +18,11 @@ on:
       description:
         description: '包描述'
         required: true
-        default: 'A LuCI application packaged as apk'
+        default: ''
       binary:
         description: '二进制安装路径 (仅记录用, 二进制需另行提供)'
-        required: false
-        default: ''
+        required: true
+        default: '/usr/local/bin/'
       start_args:
         description: '启动参数 (空格分隔)'
         required: false
