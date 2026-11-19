@@ -135,15 +135,5 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.package_name }}-${{ github.event.inputs.version }}
-          name: ${{ github.event.inputs.service_title }} ${{ github.event.inputs.version }}
-          body: |
-            ## ${{ github.event.inputs.service_title }} ${{ github.event.inputs.version }}
-
-            ${{ github.event.inputs.description }}
-
-            **Binary**: `${{ github.event.inputs.binary }}`
-            **Start args**: `${{ github.event.inputs.start_args }}`
-            **Has web**: ${{ github.event.inputs.has_web }}
+          tag_name: ipk
           files: ${{ steps.build.outputs.ipk_name }}
-          fail_on_unmatched_files: true
